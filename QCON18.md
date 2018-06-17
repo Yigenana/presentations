@@ -1,6 +1,9 @@
 footer: @yigenana
 slidenumbers: true
 
+Notes: Go tooling is great, highlight how they learned from other languages and made it part of the language very easily, makes the workflow easy. Explicity mention that we're entirely in the cloud. 
+21st century language: Developed for the 21st century, for the cloud. Go was developed for a specific need. Wanted to be usablility and simplicity. 
+
 # Digital Publishing for Scale
 
 ## The Economist and Go
@@ -57,7 +60,7 @@ Application Priciples
 * Fail fast
 * Continuous Integration & Delivery
 
-^ Failing Fast: Compiled, static language and error handling enabling fast failure in a CI/CD environment
+^ To dive in a little further, I want to share a few examples of where Go fit our needs. Failing Fast was a critical part of our system since we were working with distributed, independent services. Aligning with the Twelve Factor App principals, we wanted to be sure we could start quickly and fail quickly. Go's design as a static, compiled langauge enables fast start up times and the performance of the compiler has continually improved and never been an issue for us. Additionally, the Go error handling design allowed us to not only fail faster, but fail smarter.
 
 ---
 
@@ -75,24 +78,24 @@ Errors vs Exception
 # Fail Fast: Error Type
 
 ```
-type error interface {
+type customError interface {
     Error() string
 }
 
 // New returns an error that formats as the given text.
-func New(text string) error {
-    return &error{text}
+func New(text string) customError {
+    return &customError{text}
 }
 
 func Sqrt(f float64) (float64, error) {
     if f < 0 {
-        return 0, errors.New("math: square root of negative number")
+        return 0, customError.New("math: square root of negative number")
     }
     // implementation
 }
 ```
 
-^ In Go, all errors are values. Calling Error on an error type returns the error as a string, often used for logging. You can also easily create errors like with the New function above.
+^ Let's introduce the error type. In Go, all errors are values. Calling Error on an error type returns the error as a string, often used for logging. The Error type is an interface. I won't spend too much time on Go interfaces in this talk, but essentially it is a type with methods and any other custom type can implement the interface if it has those methods. So by added an Error method that returns a string, you can easily create custom errors and you generate them like with the New function above.
 
 ---
 
@@ -108,8 +111,7 @@ func fetchContent(id string) (string, error) {
 }
 ```
 
-^ In Go, functions allow multiple return values, so if your function or method can fail, it will likely return an error value. The language encourages you to explicitly check for errors where they occur. 
-
+^So what does this mean in practice? In Go, functions allow multiple return values, so if your function or method can fail, it will likely return an error value. The language encourages you to explicitly check for errors where they occur, so you code will frequently have this "if err != nil" check.
 ---
 
 # Fail Fast: Error Handling
@@ -135,7 +137,7 @@ if err != nil {
 
 <sub>[Error Handling in Go](https://blog.golang.org/error-handling-and-go)</sub>
 
-^ The Go authors argue that not all exceptions are exceptional. Not all errors should crash your app. If you can gracefully recover from an error, you should do so. Error as values enables you to use the error to simplify your error handling. In a distributed  system for example, we can easily enable retries by wrapping our errors. Network issues are always going to be encountered in our system, whether we're sending data to other internal services or pushing to third party tools like Apple News or Facebook. This simple example above highlight how we can take advantage of error as a type to build in retries and evetual backoffs into our system, so that we don't fail on minor, temporary distruptions. We've used similar error wrapping for handling HTTP errors and better using HTTP status code to communicate the type of errors to clients.
+^This frequent error handling can seem repetative at first. However, the Go authors argue that not all exceptions are exceptional meaning that not all errors should crash your application. If you can gracefully recover from an error, you should do so. Error as a value enables you to use the error to simplify your error handling. In a distributed  system for example, we can easily enable retries by wrapping our errors. Network issues are always going to be encountered in our system, whether we're sending data to other internal services or pushing to third party tools like Apple News or Facebook. This example from the Go Blog highlights how we can take advantage of error as a type to build in retries and evetual backoffs into our system, so that we don't fail on minor, temporary distruptions. We've used similar error wrapping for handling HTTP errors and better using HTTP status code to communicate the type of errors to clients.
 
 # Consistency: Language Design
 
@@ -144,9 +146,7 @@ The Canonical Article
 * Aligned to schema.org standards
 * Querable via GraphQL
 
-^Static: Dependency and reliability in a distributed, enterprise environment.
-Content is king. Every product and consumer needs consistency from our API. Our products primarily use GraphQL to query our API, which uses a static schema. 
-If was critical that we delivered our content consistently. A static language helps us enforce that from the start. Go's design as a static language and it's strong type checking during compilation aligns with our goals. There were also several great tools, like json schema validation, we could implement in our testing suite.
+^Another critical factor in our applications is consistency. At The Economist content is king. Every product and consumer needs consistency from our API. Our products primarily use GraphQL to query our API, which uses a static schema and our distrbuted services are applying logic based on content specific data. Thus it's critical that we delivered our content consistently. A static language helps us enforce this from the was an easy win in helping ensure our data was consistent.
 
 ---
 
@@ -161,8 +161,7 @@ func Sum(x int, y int) int {
 }
 ```
 
-^Testing is a critical tool for successful microservice integration. Fast compile times combined with testing  as a first class feature in Go enables strong testing practices and quick failures in our build pipelines.
-^Go comes with a testing package in the standard library, as well as several great contributed packages for testing. Go Tooling allows for tests to be easily setup and run. Create a test file by adding "underscore test" to the file and run the built in command "go test" in the directory to run the tests.
+^The next feature that improved our consistency was Go's testing package. Go's fast compile times combined with testing as a first class feature enabled us to embed strong testing practices into our workflows and quick failures in our build pipelines. Let's take a quick look at testing in Go by reviewing a test for this Sum function.
 
 ---
 
@@ -182,7 +181,7 @@ func testSum(t *testing.T) {
 }
 ```
 
-^My test file imports the standard library testing package. All tests are functions that take a pointer to a T type that manages the test state and ensures the function is run when the "go test" command is run. From there you write the test that verifies the function runs as expected. 
+^To create a test for this code, I simply created a file with the same  package name and append underscore "test" to the file name. My test file imports the standard library testing package. All tests are functions that take a pointer to a T type that manages the test state and ensures the function is run when the "go test" command is run. From there you write the test that verifies the function runs as expected. 
 
 ---
 
@@ -194,27 +193,170 @@ func testSum(t *testing.T) {
 * TestMain: Add extra setup or teardown for tests
 * Table tests and mocks
 
-^Additionally the test command has several helpful feature flags. The "cover" flag  provides a detailed report on code coverage, which is a helpful tool for you development process. The "bench" test runs benchmark tests with are denoted by starting with the word Bench rather than test. The TestMain function allows extra setup for test, such as a mock metadata or authentication server. Additionally, Go makes it quite easy to use table test with anonymous structs and mocks with interfaces, making your tests more robust.
+^The Go Tooling for tests makes them easy setup and run. Running "go test" will run the tests in the current directory. Additionally the test command has several helpful feature flags. The "cover" flag  provides a detailed report on code coverage, which is a helpful tool for you development process. The "bench" test runs benchmark tests with are denoted by starting with the word Bench rather than test. The TestMain function allows extra setup for test, such as a mock metadata or authentication server. Additionally, Go makes it quite easy to use table test with anonymous structs and mocks with interfaces, making your tests more robust. So while testing is nothing new, Go makes it easy to write robust tests and then embed them seamlessly into your workflow. From the start we were able to run tests are part of our build pipelines with no special customization and we've event added githooks to runs tests before pushing code to Github. 
 
 ---
 
 # Consistency: The Challenges
 
 ```
-TODO: PHP empty int vs string example
+// One moment an empty int value is 0.
+{
+	"id": "test123",
+	"type": "article",
+	"ukOnly": 0
+}
+
+// The next it's an empty string!
+{
+	"id": "test123",
+	"type": "article",
+	"ukOnly": ""
+}
 ```
 
-^One of the first major challenges for our platform was managing dynamic content from unpredictable backends. We consumed content from source CMS systems primarily via JSON endpoints, but we couldn't guarantee the data types would be consistent. This meant we couldn't easily use Go's encoding/json package, which supports unmarshalling JSON into structs, but panics if the types do not match. 
+^However, we weren't without our challenges in acheiving consistency with Go. One of the first major challenges for our platform was managing dynamic content from unpredictable backends. We consume content from source CMS systems primarily via JSON endpoints, but we couldn't guarantee the data types would be consistent. This meant we couldn't easily use Go's encoding/json package, which supports unmarshalling JSON into structs, but panics if the types do not match. 
 
 ---
 
 # Consistency: Serializing Dynamic Content
 
 ```
-TODO: Canonical example vs JSON/Unmarshal
+package json
+
+// decodeState represents the state while decoding a JSON value.
+type decodeState struct {
+	data         []byte
+	off          int // next read offset in data
+	opcode       int // last read result
+	scan         scanner
+	errorContext struct { // provides context for type errors
+		Struct string
+		Field  string
+	}
+	savedError            error
+	useNumber             bool
+	disallowUnknownFields bool
+}
+
+...
+
+func (d *decodeState) value(v reflect.Value) error {
+	switch d.opcode {
+	default:
+		return errPhase
+
+	case scanBeginArray:
+		if v.IsValid() {
+			if err := d.array(v); err != nil {
+				return err
+			}
+		} else {
+			d.skip()
+		}
+		d.scanNext()
+
+	case scanBeginObject:
+		if v.IsValid() {
+			if err := d.object(v); err != nil {
+				return err
+			}
+		} else {
+			d.skip()
+		}
+		d.scanNext()
+
+	case scanBeginLiteral:
+		// All bytes inside literal return scanContinue op code.
+		start := d.readIndex()
+		d.scanWhile(scanContinue)
+
+		if v.IsValid() {
+			if err := d.literalStore(d.data[start:d.readIndex()], v, false); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+...
+
+// convertNumber converts the number literal s to a float64 or a Number
+// depending on the setting of d.useNumber.
+func (d *decodeState) convertNumber(s string) (interface{}, error) {
+	if d.useNumber {
+		return Number(s), nil
+	}
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return nil, &UnmarshalTypeError{Value: "number " + s, Type: reflect.TypeOf(0.0), Offset: int64(d.off)}
+	}
+	return f, nil
+}
 ```
 
-^To overcome this challenge, we needed a custom way to map our backends to a standard format. Ater a few iterations on the approach, we decided to implement a custom unmarshalling process. In some ways, this felt a bit like rebuilding the a standard lib package, but it gave us fine grained control of how we handled source data. It enabled us to decide when to apply defaults if we had invalid data and when to error.
+^To overcome this challenge, we needed a custom way to map our backends to a standard format. Ater a few iterations on the approach, we decided to implement a custom unmarshalling process. In some ways, this felt a bit like rebuilding the a standard lib package, but it gave us fine grained control of how we handled source data. Above is a snippet of the approach in Go's encoding JSON library. You can see that the combination of interfaces and reflect is used. Note that reflection in Go has a relatively limited use case compared to some other langauges and is primarily for determining data types, as you can see above.
+
+---
+
+# Consistency: Serializing Dynamic Content
+
+```
+package canonical
+
+// traverseState represents current state of tree traversal.
+type traverseState struct {
+	object   *s3.Object
+	tags     *traverseTags
+	field    reflect.StructField
+	treePath string
+}
+
+...
+
+// traverse is a top level tree traversal function.
+func (t traverseState) traverse(v reflect.Value) {
+	if !v.IsValid() || !v.CanSet() {
+		return
+	}
+	switch v.Kind() {
+	case reflect.Struct:
+		switch {
+		case t.field.Tag.Get(refTag) != "":
+			t.setRef(v)
+		default:
+			t.traverseStruct(v)
+		}
+	case reflect.Slice:
+		if t.field.Tag.Get(pathTag) != "" {
+			t.setSlice(v)
+		}
+	case reflect.String, reflect.Bool, reflect.Int, reflect.Float64:
+		if t.field.Tag.Get(pathTag) != "" {
+			t.setPrimitive(v)
+		}
+	default:
+		logger.Warnln("Unknown kind:", v)
+	}
+}
+
+...
+
+func toInt(r gjson.Result) int64 {
+	if !r.Exists() {
+		return 0
+	}
+	switch r.Type {
+	case gjson.True, gjson.False, gjson.String, gjson.Number:
+		return r.Int()
+	default:
+		return 0
+	}
+}
+```
+
+^This is a snippet of our own approach, which follows the same basic steps as the Go library, however it allowes us to decide when to apply defaults if we had invalid data and when to error and still takes advantage of the existing functionality in the Go standard lib.
 
 ---
 
@@ -255,6 +397,7 @@ Pick two
 * Partition Tolerance
 
 ^Working with distributed data means wrestling with the gaurantees we promise consumers. As per the CAP theorem, it is impossible to simultaneously provide more than two out of the following three guarantees: Consistency. Availability. Partition tolerance. In our platform, we chose Eventual Consistency, meaning that we guarentee reads from our data sources will eventually be consistent, we tolerate moderate delays in all data sources reaching a consistent state. One of the ways we minimize that gap is by taking advantage of GoRoutines.
+^goroutines are just green/grain threads, user level processes, first class feature of concurrency, likeweight, helps prevent thread exhaustion. (Add a highlevel summary)
 
 ---
 
@@ -292,6 +435,7 @@ Go has many tools that make it easy to have visibility into your applications, a
 ^When go was released it had no dependencies management system. Within the community several tools were developed to meet this need. Within our own systems, we used Git Submodules. This made sense at the time as the community was actively pushing for a standard dependency management tool, and so we wanted to use a non-Go tool until the chosen tool arrived. It's been 2 years and while the community is closer to an aligned approach and tool for dependency management, it's not there yet. At The Economist, we've had minimal issues with our current approach, and so it hasn't posed specific challenges for us, but it certianly has been challnging for others and it something to be aware when transitioning to Go. 
 
 ---
+^When we design systems it's more than just programming and we have to understand what works where and when. Wrap up where Go and good and where other lanugages are better.
 
 # Scale: The Challenges
 

@@ -242,10 +242,6 @@ type decodeState struct {
 ...
 
 func (d *decodeState) value(v reflect.Value) error {
-	switch d.opcode {
-	default:
-		return errPhase
-
 	case scanBeginArray:
 		if v.IsValid() {
 			if err := d.array(v); err != nil {
@@ -372,18 +368,64 @@ TODO: Benchmark tests of custom vs standard marshalling and scale
 # Scale: HTTP and APIs
 
 ```
-HTTP endpoint in go
+package main
+
+import (
+    "fmt"
+    "log"
+    "net/http"
+)
+
+func handler(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintf(w, "Hello World!")
+}
+
+func main() {
+    http.HandleFunc("/", handler)
+    log.Fatal(http.ListenAndServe(":8080", nil))
+}
 ```
 
-^Part of this scaling was also enable with the strong support for networking and APIS in Go. In Go, you can quickly implement scalable http endpoints with no frameworks needed. In this example you can see I've imported the net/http package and setup a handler, with takes an request and response writer. We started with one, but it was more bloat, found we could do everthing we needed with net/http and encoding/json.
+^Part of this scaling was also enable with the strong support for networking and APIS in Go. In Go, you can quickly implement scalable http endpoints with no frameworks needed. In this example you can see I've imported the net/http package and setup a handler, with takes an request and response writer. You can access request information such as the url in the Request object and write to the response write to send back a request. When we first started, we were using a framework, but eventually went back to just using the standard lib as it had a lot more than we needed. Go was able to meet all of our networking needs.
 
 # Scale: HTTP and concurrency
 
 ```
-Go http package sample
+func (srv *Server) Serve(l net.Listener) error {
+	baseCtx := context.Background() // base is always background, per Issue 16220
+	ctx := context.WithValue(baseCtx, ServerContextKey, srv)
+	for {
+		rw, e := l.Accept()
+		if e != nil {
+			select {
+			case <-srv.getDoneChan():
+				return ErrServerClosed
+			default:
+			}
+			if ne, ok := e.(net.Error); ok && ne.Temporary() {
+				if tempDelay == 0 {
+					tempDelay = 5 * time.Millisecond
+				} else {
+					tempDelay *= 2
+				}
+				if max := 1 * time.Second; tempDelay > max {
+					tempDelay = max
+				}
+				srv.logf("http: Accept error: %v; retrying in %v", e, tempDelay)
+				time.Sleep(tempDelay)
+				continue
+			}
+			return e
+		}
+		tempDelay = 0
+		c := srv.newConn(rw)
+		c.setState(c.rwc, StateNew) // before Serve can return
+		go c.serve(ctx)
+	}
+}
 ```
 
-^Additionally, these endpoints can scale because each request on a handler is a goroutine, baked in, no customization needed
+^These endpoints can scale because each request on a handler is a goroutine, baked in, no customization needed. The Serve function here from the net/http library is called when requested are recieved on the Listener, like I setup in the example before. And at the end you can see the "go" keyword before the request is served, meaning each request is processed in it's own go routine. A goroutine is a lightweight thread managed by the Go runtime. I'll talk about this a bit more as we address the next issue of scale our system encountered.
 
 ---
 
@@ -396,17 +438,45 @@ Pick two
 * Availiabity
 * Partition Tolerance
 
-^Working with distributed data means wrestling with the gaurantees we promise consumers. As per the CAP theorem, it is impossible to simultaneously provide more than two out of the following three guarantees: Consistency. Availability. Partition tolerance. In our platform, we chose Eventual Consistency, meaning that we guarentee reads from our data sources will eventually be consistent, we tolerate moderate delays in all data sources reaching a consistent state. One of the ways we minimize that gap is by taking advantage of GoRoutines.
-^goroutines are just green/grain threads, user level processes, first class feature of concurrency, likeweight, helps prevent thread exhaustion. (Add a highlevel summary)
+<sub>[Go Concurrency Patterns](https://www.youtube.com/watch?v=f6kdp27TYZs)</sub>
+<sub>[Understanding Channels](https://www.youtube.com/watch?v=KBZlN0izeiY)</sub>
+
+^Working with distributed data means wrestling with the gaurantees we promise consumers. As per the CAP theorem, it is impossible to simultaneously provide more than two out of the following three guarantees: Consistency. Availability. Partition tolerance. In our platform, we chose Eventual Consistency, meaning that we guarentee reads from our data sources will eventually be consistent, we tolerate moderate delays in all data sources reaching a consistent state. One of the ways we minimize that gap is by taking advantage of Goroutines. As I meantioned, Goroutines are essentially green threads. They're lightweight, and managed by the Go runtime to prevent thread exhaustion. There are some great talks I linked here that go more in depth if you're interested.
 
 ---
 
 #Scale: Go Routines
 
 ```
-go routine example with ES
+func reprocess(searchResult *http.Response) (int, error) {
+
+	responses := make([]response, len(searchResult.Hits.Hits))
+	
+	var wg sync.WaitGroup
+	wg.Add(len(responses))
+	
+	for i, hit := range searchResult.Hits.Hits {
+		wg.Add(1)
+		go func(i int, item elastic.SearchHit) {
+			defer wg.Done()
+			code, err := reprocessItem(item)
+			responses[i].code = code
+			responses[i].err = err
+		}(i, *hit)
+	}
+	wg.Wait
+
+	// Check and log responses.
+	for i, v := range responses {
+		if v.err != nil {
+			return v.code, v.err
+		}
+	}
+
+	return http.StatusOK, nil
+}
 ```
-^One of the data sources in our system in Elasticsearch. When content is updated in the system, one of our processes is to be sure that all content referencing that item is updated and reindexed. With Goroutines we can improve the time it takes run this reprocessing, thus ensuring the items are all consisten faster. In the example above you can see that after querying all the items that need reprocessing, we run each reprocess event in a goroutine. With channels, gather the responses from ES as the arrive and end the routine once each item has responded. 
+^One of the data sources in our system in Elasticsearch. When content is updated in the system, one of our processes is to be sure that all content referencing that item is updated and reindexed. With Goroutines we can improve the time it takes run this reprocessing, thus ensuring the items are all consisten faster. In the example above you can see that after querying all the items that need reprocessing, we run each reprocess event in a goroutine.
 
 #Scale: Go Routines
 
@@ -414,7 +484,7 @@ go routine example with ES
 benchmark with and without goroutines
 ```
 
-^This is a somewhat oversimplified example of the performnce differences when I run this reindexing process synchronously vs asyncronsly with Goroutines. The improvements are relatively small but in a distributed systems with 1 content change triggering hundreds of events, these improvements add up and have enables use to reach a consistent state with minimal impact or delay for consumers.
+^This is a somewhat oversimplified example of the performance differences when I run this reindexing process synchronously vs asyncronsly with Goroutines. The improvements are relatively small but in a distributed systems with 1 content change triggering hundreds of events, these improvements add up and have enables use to reach a consistent state with minimal impact or delay for consumers.
 
 # Scale: The Happy Path
 

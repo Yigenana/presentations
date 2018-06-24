@@ -1,41 +1,41 @@
-footer: @yigenana
-slidenumbers: true
+theme: simple, 3
 
-# Digital Publishing for Scale
+#Digital Publishing for Scale
 
-## The Economist and Go
+##The Economist and Go
 
-### Jonas, Content Platform Lead Engineer
-
----
-# Print Pressing Forward
-
-Image: https://commons.wikimedia.org/wiki/File:Economics_demand_and_supply_curves.jpg
-
-^When I tell people that I work for The Economist, they assume I'm some kind of economics or stats person and my work is a little something like this. Then I tell them I'm a Lead Engineer for the Content Platform and program primarily with Go and I get a surpised reaction. That's because for a long time, The Economist with primarily conerned with print.
+###Jonas
+###Lead Engineer, Content Platform 
 
 ---
+#Print Pressing Forward
 
-# Print Pressing Forward
+![inline](Slide2_Economics.jpg)
 
-Image: https://commons.wikimedia.org/wiki/Printing_press#/media/File:PrintMus_038.jpg
-
-^I'm going to assume however, in a room full how technologists, that's not how most of us read the news any more. Share of hands, who still preferes to read their news in print? And how about online or mobile? The Economist, like most publishered, realized they needed to modernize and digitize in order to keep reaching our readers, and that's when I jumped into the picture
+^When I tell people that I work for The Economist, they assume I'm some kind of economics or stats person and my work is a little something like this. Then I tell them I'm a Lead Engineer for the Content Platform and program primarily with Go and I get a surprised reaction. That's because for a long time, The Economist with primarily concerned with print.
 
 ---
 
-# Print Pressing Forward
+#Print Pressing Forward
 
-Drupal: https://www.google.com/imgres?imgurl=https%3A%2F%2Fhyperlife.com.cy%2Fwp-content%2Fuploads%2F2016%2F02%2Fdrupal1600.png&imgrefurl=https%3A%2F%2Fhyperlife.com.cy%2Ftechnologiesframeworks%2Fdrupal1600%2F&docid=Aw4h3WLYRGQFbM&tbnid=VM1-NMWjUJ2-xM%3A&vet=1&w=1600&h=1600&bih=616&biw=1280&ved=2ahUKEwjBwpWY1erbAhXOxFkKHe5TCbUQxiAoAXoECAEQFQ&iact=c&ictx=1
-Gopher: https://golang.org/doc/gopher/frontpage.png
+![inline](Slide3_PrintingPress.jpg)
+
+^I'm going to assume however, in a room full how technologists, that's not how most of us read the news any more. Share of hands, who still prefers to read their news in print? And how about online or mobile? The Economist, like most publishers, realized they needed to modernize and digitize in order to keep reaching our readers, and that's when I jumped into the picture
+
+---
+
+[.background-color: #ffffff]
+
+![left](Slide4_Drupal.png)
+![fit,right](Slide4_Gopher.png)
 
 ^I joined The Economist to take part in a project that would reshape our technology stack and modernize it in order to better support the digital distribution of content. At that time,  content was being authored and displayed in a Monolithic Drupal CMS. For those less familiar with Drupal, it was a one-in-all solution primarily using PHP, MySQL, JS, and then CSS and HTML for design.  Our goal was to break up the monolith and develop a platform that consumed content, standardized it, and delivered it via an API. This platform would be hosted in AWS, use Docker containers, and be written primarily in Go.
 
 ---
 
-# The Happy Path to Go
+#The Happy Path to Go
 
-The Platform
+**The Platform**
 * AWS hosted
 * Event Messaging
 * Worker microservices
@@ -43,46 +43,46 @@ The Platform
 * S3, DynamoDB, and ElasticSearch data storage
 * RESTful API & GraphQL
 
-^ So why did we choose Go? Well first, it's helpful to understand the overall architeture for the new system. The Content Platform is a event based system. It responds to events from our different content authoring platforms and triggers a stream of processes run in descrete worker miscroservices. These services perform functions such as data standardization, sematic tagging analysis, indexing in our ElasticSearch database, formating and pushing content to external platforms like apple news or facebook, and much more. We also have a RESTful API, which combined with GrahpQL, is used to query content, and this is how our products, such as the website and mobile apps, fetch content to be displayed.
+^So why did we choose Go? Well first, it's helpful to understand the overall architecture for the new system. The Content Platform is a event based system. It responds to events from our different content authoring platforms and triggers a stream of processes run in discrete worker miscroservices. These services perform functions such as data standardization, semantic tagging analysis, indexing in our ElasticSearch database, formatting and pushing content to external platforms like apple news or facebook, and much more. We also have a RESTful API, which combined with GrahpQL, is used to query content, and this is how our products, such as the website and mobile apps, fetch content to be displayed.
 
 ---
-# The Happy Path to Go
+#The Happy Path to Go
 
-Key factors
+**Key factors**
 * Built in concurrency support enables performance at scale
 * Strong networking and API support
 * Compiled language simple to deploy across platforms
 * Simple design and syntax quickly enables developers
 
-^ Understanding the type of architecture we were aiming for, we then had to find the right language for our Worker microservices. Go was compared against Python, Ruby, Node, PHP, and Java. While every language had its strengths , Go fit best with our architecture and use cases. Go's baked in concurrency and apis and it's design as a static, compiled language would enable a distributed, eventing systems that could scale quickly. Additionaly, the relatively simple syntax of Go made it easy to pick up and start writing working code, which was a quick win for a team going through so much technology transition. Overall, Go was a language developed for usablility and efficiency in a distributed, cloud driven world.
+^Understanding the type of architecture we were aiming for, we then had to find the right language for our Worker microservices. Go was compared against Python, Ruby, Node, PHP, and Java. While every language had its strengths , Go fit best with our architecture and use cases. Go's baked in concurrency and apis and it's design as a static, compiled language would enable a distributed, eventing systems that could scale quickly. Additionally, the relatively simple syntax of Go made it easy to pick up and start writing working code, which was a quick win for a team going through so much technology transition. Overall, Go was a language developed for usability and efficiency in a distributed, cloud driven world.
 
 ---
 
-# Fail Fast: Language Design
+#Fail Fast: Language Design
 
-Application Priciples
+**Application Principles**
 * Minimize startup time
 * Fail fast
 * Continuous Integration & Delivery
 
-^To dive in a little further, I want to share a few examples of where Go fit our needs. Failing Fast was a critical part of our system since we were working with distributed, independent services. Aligning with the Twelve Factor App principals, we wanted to be sure we could start quickly and fail quickly. Go's design as a static, compiled langauge enables fast start up times and the performance of the compiler has continually improved and never been an issue for us. Additionally, the Go error handling design allowed us to not only fail faster, but fail smarter.
+^To dive in a little further, I want to share a few examples of where Go fit our needs. Failing Fast was a critical part of our system since we were working with distributed, independent services. Aligning with the Twelve Factor App principals, we wanted to be sure we could start quickly and fail quickly. Go's design as a static, compiled language enables fast start up times and the performance of the compiler has continually improved and never been an issue for us. Additionally, the Go error handling design allowed us to not only fail faster, but fail smarter.
 
 ---
 
-# Fail Fast: Errors vs Exceptions
+#Fail Fast: Errors vs Exceptions
 
-Errors vs Exception
+**Errors vs Exception**
 * No exceptions
 * Error as a type
-* Failing fast the responsbility of the developer
+* Failing fast the responsibility of the developer
 
-^ A major difference people quickly notice in Go is that is does not have exceptions, rather it has an Error Type. 
+^A major difference people quickly notice in Go is that is does not have exceptions, rather it has an Error Type. 
 
 ---
 
-# Fail Fast: Error Type
+# Fail Fast: Error Handling
 
-```
+```go
 type error interface {
     Error() string
 }
@@ -103,13 +103,13 @@ func (e *errorString) Error() string {
 
 ```
 
-^ Let's introduce the error type. In Go, all errors are values. The Error type is predeclared and is an interface, which you see in the first block above. I won't spend too much time on Go interfaces in this talk, but essentially it is a named collection of methods and any other custom type can satisfy the interface if it has those same methods. So the error type is an interface that can describe itself with a string. So by added an Error method that returns a string, you can easily create custom errors and you generate them like with the New function above, which comes from the errors package.
+^Let's introduce the error type. In Go, all errors are values. The Error type is predeclared and is an interface, which you see in the first block above. I won't spend too much time on Go interfaces in this talk, but essentially it is a named collection of methods and any other custom type can satisfy the interface if it has those same methods. So the error type is an interface that can describe itself with a string. So by added an Error method that returns a string, you can easily create custom errors and you generate them like with the New function above, which comes from the errors package.
 
 ---
 
-# Fail Fast: Error Handling
+#Fail Fast: Error Handling
 
-```
+```go, [.highlight: 3-5]
 func fetchContent(id string) (string, error) {
     content, err := fetch(id)
     if err != nil {
@@ -124,9 +124,9 @@ func fetchContent(id string) (string, error) {
 
 ---
 
-# Fail Fast: Error Handling
+#Fail Fast: Error Handling
 
-```
+```go
 package net
 
 type Error interface {
@@ -145,25 +145,29 @@ if err != nil {
 }
 ```
 
-<sub>[Error Handling in Go](https://blog.golang.org/error-handling-and-go)</sub>
+[^1]: From [Error Handling in Go](https://blog.golang.org/error-handling-and-go).
 
-^This frequent error handling can seem repetative at first. However, the Go authors argue that not all exceptions are exceptional meaning that not all errors should crash your application. If you can gracefully recover from an error, you should do so. Error as a value enables you to use the error to simplify your error handling. In a distributed  system for example, we can easily enable retries by wrapping our errors. Network issues are always going to be encountered in our system, whether we're sending data to other internal services or pushing to third party tools. This example from the Go Blog highlights how we can take advantage of error as a type to build in retries and evetual backoffs into our system, so that we don't fail on minor, temporary distruptions. We've used similar error wrapping for handling HTTP errors and better using HTTP status code to communicate the type of errors to clients.
-
-# Consistency: Language Design
-
-The Canonical Article
-* Standard data model for all content
-* Aligned to schema.org standards
-* Querable via GraphQL
-
-^Another critical factor in our applications is consistency. At The Economist content is king. Every product and consumer needs consistency from our API. Our products primarily use GraphQL to query our API, which uses a static schema and our distrbuted services are applying logic based on content specific data. Thus it's critical that we delivered our content consistently. A static language helps us enforce this from the was an easy win in helping ensure our data was consistent.
+^This frequent error handling can seem repetitive at first. However, the Go authors argue that not all exceptions are exceptional meaning that not all errors should crash your application. If you can gracefully recover from an error, you should do so. Error as a value enables you to use the error to simplify your error handling. In a distributed  system for example, we can easily enable retries by wrapping our errors. Network issues are always going to be encountered in our system, whether we're sending data to other internal services or pushing to third party tools. This example from the Go Blog highlights how we can take advantage of error as a type to build in retries and eventual backoffs into our system, so that we don't fail on minor, temporary disruptions. We've used similar error wrapping for handling HTTP errors and better using HTTP status code to communicate the type of errors to clients.
 
 ---
 
-# Consistency: Testing
+#Consistency: Language Design
+
+**The Canonical Article**
+* Standard data model for all content
+* Aligned to schema.org standards
+* Hypermedia references to associated content
+* Query via GraphQL and RESTful API
+
+^Another critical factor in our applications is consistency. At The Economist content is king. Every product and consumer needs consistency from our API. Our products primarily use GraphQL to query our API, which uses a static schema and our distributed services are applying logic based on content specific data. Thus it's critical that we delivered our content consistently. A static language helps us enforce this from the was an easy win in helping ensure our data was consistent.
+
+---
+
+#Consistency: Testing
 
 main.go
-```
+
+```go
 package main
 
 func Sum(x int, y int) int {
@@ -176,10 +180,11 @@ func Sum(x int, y int) int {
 
 ---
 
-# Consistency: Testing
+#Consistency: Testing
 
 main_test.go
-```
+
+```go
 package main
 
 import "testing"
@@ -197,9 +202,9 @@ func testSum(t *testing.T) {
 
 ---
 
-# Consistency: Testing
+#Consistency: Testing
 
-## Go Test Features
+**Go Test Features**
 * Cover: Code test coverage
 * Bench: Runs benchmark tests (Benchxxx)
 * TestMain: Add extra setup or teardown for tests
@@ -209,9 +214,10 @@ func testSum(t *testing.T) {
 
 ---
 
-# Consistency: The Challenges
+#Consistency: The Challenges
 
 One moment an empty value is 0.
+
 ```
 {
 	"id": "test123",
@@ -221,6 +227,7 @@ One moment an empty value is 0.
 ```
 
 The next moment it's an empty string!
+
 ```
 {
 	"id": "test123",
@@ -233,9 +240,9 @@ The next moment it's an empty string!
 
 ---
 
-# Consistency: Serializing Dynamic Content
+#Consistency: Serializing Dynamic Content
 
-```
+```go
 package json
 
 // decodeState represents the state while decoding a JSON value.
@@ -258,9 +265,9 @@ type decodeState struct {
 
 ---
 
-# Consistency: Serializing Dynamic Content
+#Consistency: Serializing Dynamic Content
 
-```
+```go
 func (d *decodeState) value(v reflect.Value) error {
 	case scanBeginArray:
 		if v.IsValid() {
@@ -271,7 +278,6 @@ func (d *decodeState) value(v reflect.Value) error {
 			d.skip()
 		}
 		d.scanNext()
-
 	case scanBeginObject:
 		if v.IsValid() {
 			if err := d.object(v); err != nil {
@@ -281,17 +287,6 @@ func (d *decodeState) value(v reflect.Value) error {
 			d.skip()
 		}
 		d.scanNext()
-
-	case scanBeginLiteral:
-		// All bytes inside literal return scanContinue op code.
-		start := d.readIndex()
-		d.scanWhile(scanContinue)
-
-		if v.IsValid() {
-			if err := d.literalStore(d.data[start:d.readIndex()], v, false); err != nil {
-				return err
-			}
-		}
 	return nil
 }
 
@@ -300,9 +295,9 @@ func (d *decodeState) value(v reflect.Value) error {
 
 ---
 
-# Consistency: Serializing Dynamic Content
+#Consistency: Serializing Dynamic Content
 
-```
+```go
 // convertNumber converts the number literal s to a float64 or a Number
 // depending on the setting of d.useNumber.
 func (d *decodeState) convertNumber(s string) (interface{}, error) {
@@ -320,9 +315,9 @@ func (d *decodeState) convertNumber(s string) (interface{}, error) {
 
 ---
 
-# Consistency: Serializing Dynamic Content
+#Consistency: Serializing Dynamic Content
 
-```
+```go
 package canonical
 
 // traverseState represents current state of tree traversal.
@@ -338,9 +333,9 @@ type traverseState struct {
 
 ---
 
-# Consistency: Serializing Dynamic Content
+#Consistency: Serializing Dynamic Content
 
-```
+```go
 // traverse is a top level tree traversal function.
 func (t traverseState) traverse(v reflect.Value) {
 	switch v.Kind() {
@@ -369,9 +364,9 @@ func (t traverseState) traverse(v reflect.Value) {
 
 ---
 
-# Consistency: Serializing Dynamic Content
+#Consistency: Serializing Dynamic Content
 
-```
+```go
 func toInt(r gjson.Result) int64 {
 	if !r.Exists() {
 		return 0
@@ -388,7 +383,7 @@ func toInt(r gjson.Result) int64 {
 
 ---
 
-# Consistency: Scaling Content Standardization
+#Consistency: Serializing Dynamic Content
 
 ```
 BenchmarkCustomSerializer-1   	    1000	   1345080 ns/op
@@ -407,10 +402,11 @@ BenchmarkStandardUnmarshal-5   	    1000	   1475672 ns/op
 
 ^As you can see in this first set of metrics, our custom unmarshalling tool performs at gererally the same rate as a previous iteration with the standard JSON library. What this highlights is that while the approach is a bit heavy handed in the implementation, interfaces and reflectioned worked well to acheive our goals and didn't prevent us from scaling. This may not be the right approach for every situation, but it's helped us quickly provide stardized, consistent data to our consumers.
 
+---
 
-# Scale: HTTP and APIs
+# Scale: HTTP and concurrency
 
-```
+```go
 package main
 
 import (
@@ -432,9 +428,11 @@ func main() {
 
 ^Part of this scaling was also enable with the strong support for networking and APIs in Go. In Go, you can quickly implement scalable http endpoints with no frameworks needed. In this example you can see I've imported the net/http package and setup a handler, with takes an request and response writer. You can access request information such as the url in the Request object and write to the response write to send back a request. When we first started, we were using a framework, but eventually went back to just using the standard lib as it had a lot more than we needed. Go was able to meet all of our networking needs.
 
+---
+
 # Scale: HTTP and concurrency
 
-```
+```go, [.highlight: 1, 21]
 func (srv *Server) Serve(l net.Listener) error {
 	baseCtx := context.Background() // base is always background, per Issue 16220
 	ctx := context.WithValue(baseCtx, ServerContextKey, srv)
@@ -447,16 +445,7 @@ func (srv *Server) Serve(l net.Listener) error {
 			default:
 			}
 			if ne, ok := e.(net.Error); ok && ne.Temporary() {
-				if tempDelay == 0 {
-					tempDelay = 5 * time.Millisecond
-				} else {
-					tempDelay *= 2
-				}
-				if max := 1 * time.Second; tempDelay > max {
-					tempDelay = max
-				}
-				srv.logf("http: Accept error: %v; retrying in %v", e, tempDelay)
-				time.Sleep(tempDelay)
+				// delay handling.
 				continue
 			}
 			return e
@@ -477,25 +466,23 @@ func (srv *Server) Serve(l net.Listener) error {
 
 ## CAP Theorum
 
-Pick two
+**Pick two**
 * Consistency
 * Availiabity
 * Partition Tolerance
 
-<sub>[Go Concurrency Patterns](https://www.youtube.com/watch?v=f6kdp27TYZs)</sub>
-<sub>[Understanding Channels](https://www.youtube.com/watch?v=KBZlN0izeiY)</sub>
+[^1]: [Go Concurrency Patterns](https://www.youtube.com/watch?v=f6kdp27TYZs).
+[^2]: [Understanding Channels](https://www.youtube.com/watch?v=KBZlN0izeiY).
 
 ^Working with distributed data means wrestling with the gaurantees we promise consumers. As per the CAP theorem, it is impossible to simultaneously provide more than two out of the following three guarantees: Consistency. Availability. Partition tolerance. In our platform, we chose Eventual Consistency, meaning that we guarentee reads from our data sources will eventually be consistent, we tolerate moderate delays in all data sources reaching a consistent state. One of the ways we minimize that gap is by taking advantage of Goroutines. As I meantioned, Goroutines are essentially green threads. They're lightweight, and managed by the Go runtime to prevent thread exhaustion. There are some great talks I linked here that go more in depth if you're interested.
 
 ---
 
-#Scale: Go Routines
+#Scale: Content Guarantees
 
-```
+```go
 func reprocess(searchResult *http.Response) (int, error) {
-
-	responses := make([]response, len(searchResult.Hits.Hits))
-	
+	responses := make([]response, len(searchResult.Hits.Hits))	
 	var wg sync.WaitGroup
 	wg.Add(len(responses))
 	
@@ -508,15 +495,7 @@ func reprocess(searchResult *http.Response) (int, error) {
 			responses[i].err = err
 		}(i, *hit)
 	}
-	//Wait for all object processing.
 	wg.Wait
-
-	// Check and log responses.
-	for i, v := range responses {
-		if v.err != nil {
-			return v.code, v.err
-		}
-	}
 
 	return http.StatusOK, nil
 }
@@ -524,7 +503,9 @@ func reprocess(searchResult *http.Response) (int, error) {
 
 ^One of the data sources in our system in Elasticsearch. When content is updated in the system, one of our processes is to be sure that all content referencing that item is updated and reindexed. With Goroutines we can improve the time it takes run this reprocessing, thus ensuring the items are all consisten faster. In the example above you can see that after querying all the items that need reprocessing, we run each reprocess event in a goroutine.
 
-#Scale: Go Routines
+----
+
+#Scale: Content Guarantees
 
 ```
 ProcessTimeAsync-1   	    20	   564.030301ms
@@ -542,9 +523,11 @@ ProcessTimeSync-5   	    20	   4.109966063s
 
 ^This is a somewhat oversimplified example of the performance differences when I run this reindexing process procedurally vs asyncronsly with Goroutines. The improvements are not insignificant and in a distributed systems with 1 content change triggering hundreds of events, these improvements add up and have enables use to reach a consistent state with minimal impact or delay for consumers.
 
+---
+
 # Scale: Visibility with Profiling
 
-## PPROF
+**PPROF**
 * CPU profiles, traces, heap profiles, and mutex profiles.
 * CLI tool
 * HTTP Endpoint
@@ -556,17 +539,17 @@ ProcessTimeSync-5   	    20	   4.109966063s
 
 # Scale: Dependencies
 
-Image: http://carolynvanslyck.com/talk/dep/lightning/images/moving-gopher.png
-
-go get
+##go get
+![](Slide29_Dep.png)
 
 ^In you you can easily import 3rd packages via the "go get" command. The files are stored in you GOPATH and works well for internal dependencies. Dependencies are statically linked and compiled alongside your application's code into the single application binary. This is helpful with distributed systems because it limits the complexity in installing and associating dependencies. It's made it easier for us to scale services as needed and add new services without cimplicated build processes.
 
-# Scale: The Saga of Dependencies
+---
 
-Image: https://golang.org/doc/gopher/pkg.png
+# Scale: Dependencies
 
-go where?
+##go where?
+![](Slide30_GopherBox.jpg)
 
 ^When go was released it had no dependencies management system. Within the community several tools were developed to meet this need. Within our own systems, we used Git Submodules. This made sense at the time as the community was actively pushing for a standard dependency management tool, and so we wanted to use a non-Go tool until the chosen tool arrived. It's been 2 years and while the community is closer to an aligned approach and tool for dependency management, it's not there yet. At The Economist, we've had minimal issues with our current approach, and so it hasn't posed specific challenges for us, but it certianly has been challnging for others and it something to be aware when transitioning to Go. 
 
@@ -574,37 +557,17 @@ go where?
 
 # Embracing Limitations
 
-Gopher: https://golang.org/doc/gopher/frontpage.png
-Python: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/2000px-Python-logo-notext.svg.png
-Node: https://worldvectorlogo.com/logo/nodejs-icon
-
+![](Slide31_GopherWhite.png)
+![](Slide31_Python.png)
+![](Slide31_NodeJS.png)
 
 ^When we design systems it's more than just programming and we have to understand what works where and when. Wrap up where Go and good and where other lanugages are better. 
 
+---
+
 # Embracing Limitations: Metadata Parsing
 
-```
-func getExifData(data []byte) (float64, int, error) {
-	// The exiftool program expects a file so we write
-	// the bytestream to a temporary file for processing.
-	tmp, err := ioutil.TempFile("", "audio")
-	if err != nil {
-		return 0.0, 0, err
-	}
-	defer tmp.Close()
-
-	fileName := tmp.Name()
-
-	err = ioutil.WriteFile(fileName, data, 0644)
-	if err != nil {
-		return 0.0, 0, err
-	}
-	cmdOut, err := runExif([]string{"-S", "-n", "-J", fileName})
-	if err != nil {
-		return 0.0, 0, err
-	}
-}
-
+```go
 // runExif runs the exiftool command with a set of arguments.
 func runExif(args []string) ([]byte, error) {
 	cmdOut, err := exec.Command("exiftool", args...).Output()
@@ -621,10 +584,18 @@ func runExif(args []string) ([]byte, error) {
 
 # Embracing Limitations: HTML Maddness
 
-```
-<p class=\"zpara\">Peacemakers: The Paris Conference of 1919 and Its Attempt to End War. </p><p class=\"zpara\"> By Margaret MacMillan. </p><p> </p><p><em>John Murray; 574 pages; £25. To be published in America by Random House next spring </em></p><br>\r\n<p>JUST over three weeks after the guns fell silent on the western front, Woodrow Wilson sailed for France to take what he saw as his rightful place as the saviour of the world. As the <em>SS George Washington</em> docked in Brest, the air was filled with cries of “Vive L'Amérique! Vive Wilson!” “We are so grateful”, said the French foreign minister, Stéphen Pichon, “that you have come over to give us the right sort of peace.” All Europe agreed. </p>\r\n\r\n<p></p>
 
-<p><em>• House-price index: rebased to 100 at a selected date and in nominal terms</em><br><em>• Prices in real terms: prices in $'000 at 2015 prices&nbsp;(deflated by CPI)&nbsp;</em><br><em>•&nbsp;</em><i>Prices to income: the ratio of house prices to median household incomes compared to their long-run average</i><br><em>•&nbsp;</em><i>Price to rent: the ratio of house prices to annual private-sector rents compared to their long-run average</i><br><em>• Percentage change: shows the change in inflation-adjusted prices between two selected dates</em></p><p><em><span class="fontcolor-red"><span class="fontcolor-red"><span class="fontcolor-black"><span class="fontcolor-red">We also publish interactive house-price guides to</span>&nbsp;</span><a href="\"http://www.economist.com/houseprices\&quot;">global markets</a></span>&nbsp;<span class="fontcolor-red">and&nbsp;</span><em><span class="fontcolor-red"><span class="fontcolor-red"><span class="fontcolor-black"><a href="http://www.economist.com/blogs/graphicdetail/2014/04/british-house-prices">British regions</a>.</span></span></span></em></span></em></p>
+```html
+<br><em>• Percentage change: shows the change in 
+inflation-adjusted prices between two selected dates</em></p>
+<p><em><span class="fontcolor-red"><span class="fontcolor-red">
+<span class="fontcolor-black"><span class="fontcolor-red">
+We also publish interactive house-price guides to</span>
+&nbsp;</span><a href="\"http://www.economist.com/houseprices\&quot;">global markets</a></span>
+&nbsp;<span class="fontcolor-red">and&nbsp;</span>
+<em><span class="fontcolor-red"><span class="fontcolor-red">
+<span class="fontcolor-black"><a href="http://www.economist.com/blogs/graphicdetail/2014/04/british-house-prices">British regions</a>.
+</span></span></span></em></span></em></p>
 ```
 
 ^Handling messy, broken HTML gracefully. Had to use JS.
@@ -633,7 +604,7 @@ func runExif(args []string) ([]byte, error) {
 
 # Embracing Limitations: Simple JSON handling
 
-```
+```javascript
 // getLane returns lane information from the
 // envelope. It uses jsonpointer to access the field
 // as we want to build on this in a subsequent iteration.
@@ -643,15 +614,14 @@ const getLane = (event) => {
 }
 
 ```
-The way we filter messages through our event driven system is primarily with AWS lambdas. These are meant to be light weight function spun up only when called. Once use case is to filteres our events into different lanes, we have fast and slow lanes for events that are live in the system verse reprocessing or reindexing we periodically need. This filtering is done based on a single metadata field. AWS not does support Go lambdas, and we have some use cases of that, but primarily for simple filters on event messages, Node is easier. In this example, you see we can take advantage of the javascript JSON pointer package to easily grab an element in a JSON object with the full unmarshalling that would be required with Go. Here it was easier for our devs and allowed smaller code in our Lambdas by sticking with JS.
+^The way we filter messages through our event driven system is primarily with AWS lambdas. These are meant to be light weight function spun up only when called. Once use case is to filteres our events into different lanes, we have fast and slow lanes for events that are live in the system verse reprocessing or reindexing we periodically need. This filtering is done based on a single metadata field. AWS not does support Go lambdas, and we have some use cases of that, but primarily for simple filters on event messages, Node is easier. In this example, you see we can take advantage of the javascript JSON pointer package to easily grab an element in a JSON object with the full unmarshalling that would be required with Go. Here it was easier for our devs and allowed smaller code in our Lambdas by sticking with JS.
 
 ---
 
-# Key Takeaways
-
-## Request Performance
+# Key Takeaways: Performance
 
 Single node: 60 seconds, 380 rps - 100% success - 3.5ms latency
+
 ```
 ./testTwo.sh six 60 380
 Requests [total, rate] 18000, 300.02
@@ -663,7 +633,12 @@ Success [ratio] 100.00%
 Status Codes [code:count] 200:18000
 ```
 
+---
+
+# Key Takeaways: Performance
+
 Full stack: 60 seconds, 600 rps - 100% success - 18ms latency
+
 ```
 ./testTwo.sh six 60 600
 Requests [total, rate] 36000, 600.02
@@ -679,7 +654,7 @@ Status Codes [code:count] 200:36000
 
 ---
 
-# Key Takeaways
+# Key Takeaways: Scale
 
 //To Do: Lamaar screen shot.
 
@@ -687,9 +662,9 @@ Status Codes [code:count] 200:36000
 
 ---
 
-# Key Takeaways
+# Key Takeaways: Design
 
-## Systems Design
+**Systems Design**
 * What are your system goals?
 * What guarantees are you providing your consumers?
 * What architecture and patterns are right for your system?
@@ -698,3 +673,8 @@ Status Codes [code:count] 200:36000
 ^Sometimes it's not always the right tool, and that's fine. We have a polyglot platform and use different languages where it makes sense. Go is liekly never going to be our top choice when we have to mess around with a lot of text and dynamic content, so we keep Node in our toolset. But Go's strengths are the backbone that allows are systems to scale quickly. We know it's the tool to turn to when we're adding new features and delivering to new products and it's made our development team a family of happy Gophers.
 
 ---
+
+#Thank You!
+##Jonas
+###@yigenana
+

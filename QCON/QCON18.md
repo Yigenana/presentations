@@ -7,6 +7,8 @@ theme: simple, 3
 ###Jonas
 ###Lead Engineer, Content Platform 
 
+[.footer: @yigenana]
+
 ---
 #Print Pressing Forward
 
@@ -43,10 +45,14 @@ theme: simple, 3
 * S3, DynamoDB, and ElasticSearch data storage
 * RESTful API & GraphQL
 
+![right](Slide5_BMI.png)
+
 ^So why did we choose Go? Well first, it's helpful to understand the overall architecture for the new system. The Content Platform is a event based system. It responds to events from our different content authoring platforms and triggers a stream of processes run in discrete worker miscroservices. These services perform functions such as data standardization, semantic tagging analysis, indexing in our ElasticSearch database, formatting and pushing content to external platforms like apple news or facebook, and much more. We also have a RESTful API, which combined with GrahpQL, is used to query content, and this is how our products, such as the website and mobile apps, fetch content to be displayed.
 
 ---
 #The Happy Path to Go
+
+![left](Slide6_Bulb.png)
 
 **Key factors**
 * Built in concurrency support enables performance at scale
@@ -65,6 +71,10 @@ theme: simple, 3
 * Fail fast
 * Continuous Integration & Delivery
 
+![right](Slide7_MrRobot.png)
+
+[.footer: [Twelve Factor App](https://12factor.net/)]
+
 ^To dive in a little further, I want to share a few examples of where Go fit our needs. Failing Fast was a critical part of our system since we were working with distributed, independent services. Aligning with the Twelve Factor App principals, we wanted to be sure we could start quickly and fail quickly. Go's design as a static, compiled language enables fast start up times and the performance of the compiler has continually improved and never been an issue for us. Additionally, the Go error handling design allowed us to not only fail faster, but fail smarter.
 
 ---
@@ -75,6 +85,8 @@ theme: simple, 3
 * No exceptions
 * Error as a type
 * Failing fast the responsibility of the developer
+
+![left](Slide8_FlyingGopher.jpg)
 
 ^A major difference people quickly notice in Go is that is does not have exceptions, rather it has an Error Type. 
 
@@ -120,7 +132,7 @@ func fetchContent(id string) (string, error) {
 
 ```
 
-^So what does this mean in practice? In Go, functions allow multiple return values, so if your function or method can fail, it will likely return an error value. The language encourages you to explicitly check for errors where they occur, so you code will frequently have this "if err != nil" check.
+^So what does this mean in practice? In Go, functions allow multiple return values, so if your function or method can fail, it will likely return an error value. The language encourages you to explicitly check for errors where they occur (as opposed to throwing and optionally catching an exception), so you code will frequently have this "if err != nil" check.
 
 ---
 
@@ -145,9 +157,23 @@ if err != nil {
 }
 ```
 
-[^1]: From [Error Handling in Go](https://blog.golang.org/error-handling-and-go).
+[.footer: From [Error Handling in Go](https://blog.golang.org/error-handling-and-go)]
 
-^This frequent error handling can seem repetitive at first. However, the Go authors argue that not all exceptions are exceptional meaning that not all errors should crash your application. If you can gracefully recover from an error, you should do so. Error as a value enables you to use the error to simplify your error handling. In a distributed  system for example, we can easily enable retries by wrapping our errors. Network issues are always going to be encountered in our system, whether we're sending data to other internal services or pushing to third party tools. This example from the Go Blog highlights how we can take advantage of error as a type to build in retries and eventual backoffs into our system, so that we don't fail on minor, temporary disruptions. We've used similar error wrapping for handling HTTP errors and better using HTTP status code to communicate the type of errors to clients.
+^This frequent error handling can seem repetitive at first.  Error as a value enables you to use the error to simplify your error handling. In a distributed  system for example, we can easily enable retries by wrapping our errors. Network issues are always going to be encountered in our system, whether we're sending data to other internal services or pushing to third party tools. This example from the net package highlights how we can take advantage of error as a type to distinguish transient network errors from permanent ones. We've used similar error wrapping for handling when pushing content to externa APIs to build in incremental retries.
+
+---
+
+#Fail Fast: Error Handling
+
+**Go Error Key Benefits**
+* Handle errors gracefully
+* Improve debugging and visibility
+* More user friendly errors responses
+* Greater reliability
+
+![left](Slide12_DRAWING_GOPHER.png)
+
+^The Go authors argue that not all exceptions are exceptional meaning that not all errors should crash your application. If you can gracefully recover from an error, you should do so. Additionally, the Go error handling allows you to have more control over errors, which can improve things like your debugging or the usability of errors, which we've found helpful for communicating HTTP error messages to our consumers.
 
 ---
 
@@ -158,6 +184,8 @@ if err != nil {
 * Aligned to schema.org standards
 * Hypermedia references to associated content
 * Query via GraphQL and RESTful API
+
+![right](Slide12_Bibliotheca_Botanica.jpg)
 
 ^Another critical factor in our applications is consistency. At The Economist content is king. Every product and consumer needs consistency from our API. Our products primarily use GraphQL to query our API, which uses a static schema and our distributed services are applying logic based on content specific data. Thus it's critical that we delivered our content consistently. A static language helps us enforce this from the was an easy win in helping ensure our data was consistent.
 
@@ -189,7 +217,7 @@ package main
 
 import "testing"
 
-func testSum(t *testing.T) {
+func TestSum(t *testing.T) {
 	total := Sum(1,2)
 	if total != 3 {
 		t.Errorf("Sum incorrect, got: %d, want: %d.", total, 3)
@@ -209,6 +237,8 @@ func testSum(t *testing.T) {
 * Bench: Runs benchmark tests (Benchxxx)
 * TestMain: Add extra setup or teardown for tests
 * Table tests and mocks
+
+![left](Slice15_MicDrop.png)
 
 ^The Go Tooling for tests makes them easy setup and run. Running "go test" will run the tests in the current directory. Additionally the test command has several helpful feature flags. The "cover" flag  provides a detailed report on code coverage, which is a helpful tool for you development process. The "bench" test runs benchmark tests with are denoted by starting with the word Bench rather than test. The TestMain function allows extra setup for test, such as a mock metadata or authentication server. Additionally, Go makes it quite easy to use table test with anonymous structs and mocks with interfaces, making your tests more robust. So while testing is nothing new, Go makes it easy to write robust tests and then embed them seamlessly into your workflow. From the start we were able to run tests are part of our build pipelines with no special customization and we've event added githooks to runs tests before pushing code to Github. 
 
@@ -236,7 +266,7 @@ The next moment it's an empty string!
 }
 ```
 
-^However, we weren't without our challenges in acheiving consistency with Go. One of the first major challenges for our platform was managing dynamic content from unpredictable backends. We consume content from source CMS systems primarily via JSON endpoints, but we couldn't guarantee the data types would be consistent. This meant we couldn't easily use Go's encoding/json package, which supports unmarshalling JSON into structs, but panics if the types do not match. To overcome this challenge, we needed a custom way to map our backends to a standard format. Ater a few iterations on the approach, we decided to implement a custom unmarshalling process. In some ways, this felt a bit like rebuilding the a standard lib package, but it gave us fine grained control of how we handled source data. 
+^However, we weren't without our challenges in achieving consistency with Go. One of the first major challenges for our platform was managing dynamic content from unpredictable backends. We consume content from source CMS systems primarily via JSON endpoints, but we couldn't guarantee the data types would be consistent. This meant we couldn't easily use Go's encoding/json package, which supports unmarshalling JSON into structs, but panics if the types do not match. To overcome this challenge, we needed a custom way to map our backends to a standard format. After a few iterations on the approach, we decided to implement a custom unmarshalling process. In some ways, this felt a bit like rebuilding the a standard lib package, but it gave us fine grained control of how we handled source data. 
 
 ---
 
@@ -291,7 +321,7 @@ func (d *decodeState) value(v reflect.Value) error {
 }
 
 ```
-^Using the reflection.Value object to assert the type of the data. Note that reflection in Go has a relatively limited use case compared to some other langauges. The reflect package implements run-time reflection, allowing a program to manipulate objects with arbitrary types. The typical use is to take a value with static type interface{} and extract its dynamic type information by calling TypeOf, which returns a Type.
+^Using the reflection.Value object to assert the type of the data. Note that reflection in Go has a relatively limited use case compared to some other languages. The reflect package implements run-time reflection, allowing a program to manipulate objects with arbitrary types. The typical use is to take a value with static type interface{} and extract its dynamic type information by calling TypeOf, which returns a Type.
 
 ---
 
@@ -329,7 +359,7 @@ type traverseState struct {
 }
 
 ```
-^This is a snippet of our own approach, which follows the same basic steps as the Go library, however it allowes us to decide when to apply defaults if we had invalid data and when to error and still takes advantage of the existing functionality in the Go standard lib. Object to represent the current state of our traversal.
+^This is a snippet of our own approach, which follows the same basic steps as the Go library, however it allows us to decide when to apply defaults if we had invalid data and when to error and still takes advantage of the existing functionality in the Go standard lib. Object to represent the current state of our traversal.
 
 ---
 
@@ -400,7 +430,7 @@ BenchmarkStandardUnmarshal-5   	    1000	   1475672 ns/op
 
 ```
 
-^As you can see in this first set of metrics, our custom unmarshalling tool performs at gererally the same rate as a previous iteration with the standard JSON library. What this highlights is that while the approach is a bit heavy handed in the implementation, interfaces and reflectioned worked well to acheive our goals and didn't prevent us from scaling. This may not be the right approach for every situation, but it's helped us quickly provide stardized, consistent data to our consumers.
+^As you can see in this first set of metrics, our custom unmarshalling tool performs at generally the same rate as a previous iteration with the standard JSON library. What this highlights is that while the approach is a bit heavy handed in the implementation, interfaces and reflection worked well to achieve our goals and didn't prevent us from scaling. This may not be the right approach for every situation, but it's helped us quickly provide standardized, consistent data to our consumers.
 
 ---
 
@@ -458,7 +488,7 @@ func (srv *Server) Serve(l net.Listener) error {
 }
 ```
 
-^These endpoints can scale because each request on a handler is a goroutine, baked in, no customization needed. The Serve function here from the net/http library is called when requested are recieved on the Listener, like I setup in the example before. And at the end you can see the "go" keyword before the request is served, meaning each request is processed in it's own go routine. A goroutine is a lightweight thread managed by the Go runtime. I'll talk about this a bit more as we address the next issue of scale our system encountered.
+^These endpoints can scale because each request on a handler is a goroutine, baked in, no customization needed. The Serve function here from the net/http library is called when requested are received on the Listener, like I setup in the example before. And at the end you can see the "go" keyword before the request is served, meaning each request is processed in it's own go routine. A goroutine is a lightweight thread managed by the Go runtime. I'll talk about this a bit more as we address the next issue of scale our system encountered.
 
 ---
 
@@ -471,10 +501,11 @@ func (srv *Server) Serve(l net.Listener) error {
 * Availiabity
 * Partition Tolerance
 
-[^1]: [Go Concurrency Patterns](https://www.youtube.com/watch?v=f6kdp27TYZs).
-[^2]: [Understanding Channels](https://www.youtube.com/watch?v=KBZlN0izeiY).
+![right](Slide26_Venn.png)
 
-^Working with distributed data means wrestling with the gaurantees we promise consumers. As per the CAP theorem, it is impossible to simultaneously provide more than two out of the following three guarantees: Consistency. Availability. Partition tolerance. In our platform, we chose Eventual Consistency, meaning that we guarentee reads from our data sources will eventually be consistent, we tolerate moderate delays in all data sources reaching a consistent state. One of the ways we minimize that gap is by taking advantage of Goroutines. As I meantioned, Goroutines are essentially green threads. They're lightweight, and managed by the Go runtime to prevent thread exhaustion. There are some great talks I linked here that go more in depth if you're interested.
+[.footer: [Go Concurrency Patterns](https://www.youtube.com/watch?v=f6kdp27TYZs) & [Understanding Channels](https://www.youtube.com/watch?v=KBZlN0izeiY)]
+
+^Working with distributed data means wrestling with the guarantees we promise consumers. As per the CAP theorem, it is impossible to simultaneously provide more than two out of the following three guarantees: Consistency. Availability. Partition tolerance. In our platform, we chose Eventual Consistency, meaning that we guarantee reads from our data sources will eventually be consistent, we tolerate moderate delays in all data sources reaching a consistent state. One of the ways we minimize that gap is by taking advantage of Goroutines. As I mentioned, Goroutines are essentially green threads. They're lightweight, and managed by the Go runtime to prevent thread exhaustion. There are some great talks I linked here that go more in depth if you're interested.
 
 ---
 
@@ -501,7 +532,7 @@ func reprocess(searchResult *http.Response) (int, error) {
 }
 ```
 
-^One of the data sources in our system in Elasticsearch. When content is updated in the system, one of our processes is to be sure that all content referencing that item is updated and reindexed. With Goroutines we can improve the time it takes run this reprocessing, thus ensuring the items are all consisten faster. In the example above you can see that after querying all the items that need reprocessing, we run each reprocess event in a goroutine.
+^One of the data sources in our system in Elasticsearch. When content is updated in the system, one of our processes is to be sure that all content referencing that item is updated and reindexed. With Goroutines we can improve the time it takes run this reprocessing, thus ensuring the items are all consistent faster. In the example above you can see that after querying all the items that need reprocessing, we run each reprocess event in a goroutine.
 
 ----
 
@@ -521,7 +552,7 @@ ProcessTimeSync-4   	    20	   3.745507495s
 ProcessTimeSync-5   	    20	   4.109966063s
 ```
 
-^This is a somewhat oversimplified example of the performance differences when I run this reindexing process procedurally vs asyncronsly with Goroutines. The improvements are not insignificant and in a distributed systems with 1 content change triggering hundreds of events, these improvements add up and have enables use to reach a consistent state with minimal impact or delay for consumers.
+^This is a somewhat oversimplified example of the performance differences when I run this reindexing process procedurally vs asynchronous with Goroutines. The improvements are not insignificant and in a distributed systems with 1 content change triggering hundreds of events, these improvements add up and have enables use to reach a consistent state with minimal impact or delay for consumers.
 
 ---
 
@@ -533,7 +564,9 @@ ProcessTimeSync-5   	    20	   4.109966063s
 * HTTP Endpoint
 * Visualizations
 
-^Go has many tools that make it easy to have visibility into your applications, and these are especially helpful as you start focusing on your system's preformance and using more advanced features like GoRoutines and Channels. One of the more powerful tools is PPROF, which collects CPU profiles, traces, heap profiles, and mutex profiles and exposes these on a port. These metrics can also be interactively viewed in the command line, or exported into visualizations. I've used PPROF both to understand the performance of my application and to debug the application when I've encountered issues like memory leaks. This is another example of where Go provides these advanced tools right out of the box. I can immediately start using this during my programing.
+![left](Slide30_GOPHER_LAPTOP.png)
+
+^Go has many tools that make it easy to have visibility into your applications, and these are especially helpful as you start focusing on your system's performance and using more advanced features like GoRoutines and Channels. One of the more powerful tools is PPROF, which collects CPU profiles, traces, heap profiles, and mutex profiles and exposes these on a port. These metrics can also be interactively viewed in the command line, or exported into visualizations. I've used PPROF both to understand the performance of my application and to debug the application when I've encountered issues like memory leaks. This is another example of where Go provides these advanced tools right out of the box. I can immediately start using this during my programing.
 
 ---
 
@@ -542,7 +575,7 @@ ProcessTimeSync-5   	    20	   4.109966063s
 ##go get
 ![](Slide29_Dep.png)
 
-^In you you can easily import 3rd packages via the "go get" command. The files are stored in you GOPATH and works well for internal dependencies. Dependencies are statically linked and compiled alongside your application's code into the single application binary. This is helpful with distributed systems because it limits the complexity in installing and associating dependencies. It's made it easier for us to scale services as needed and add new services without cimplicated build processes.
+^In you you can easily import 3rd packages via the "go get" command. The files are stored in you GOPATH and works well for internal dependencies. Dependencies are statically linked and compiled alongside your application's code into the single application binary. This is helpful with distributed systems because it limits the complexity in installing and associating dependencies. It's made it easier for us to scale services as needed and add new services without complicated build processes.
 
 ---
 
@@ -551,7 +584,7 @@ ProcessTimeSync-5   	    20	   4.109966063s
 ##go where?
 ![](Slide30_GopherBox.jpg)
 
-^When go was released it had no dependencies management system. Within the community several tools were developed to meet this need. Within our own systems, we used Git Submodules. This made sense at the time as the community was actively pushing for a standard dependency management tool, and so we wanted to use a non-Go tool until the chosen tool arrived. It's been 2 years and while the community is closer to an aligned approach and tool for dependency management, it's not there yet. At The Economist, we've had minimal issues with our current approach, and so it hasn't posed specific challenges for us, but it certianly has been challnging for others and it something to be aware when transitioning to Go. 
+^When go was released it had no dependencies management system. Within the community several tools were developed to meet this need. Within our own systems, we used Git Submodules. This made sense at the time as the community was actively pushing for a standard dependency management tool, and so we wanted to use a non-Go tool until the chosen tool arrived. It's been 2 years and while the community is closer to an aligned approach and tool for dependency management, it's not there yet. At The Economist, we've had minimal issues with our current approach, and so it hasn't posed specific challenges for us, but it certainly has been challenging for others and it something to be aware when transitioning to Go. 
 
 ---
 
@@ -561,7 +594,7 @@ ProcessTimeSync-5   	    20	   4.109966063s
 ![](Slide31_Python.png)
 ![](Slide31_NodeJS.png)
 
-^When we design systems it's more than just programming and we have to understand what works where and when. Wrap up where Go and good and where other lanugages are better. 
+^When we design systems it's more than just programming and we have to understand what works where and when. Wrap up where Go and good and where other languages are better. 
 
 ---
 
@@ -614,7 +647,24 @@ const getLane = (event) => {
 }
 
 ```
-^The way we filter messages through our event driven system is primarily with AWS lambdas. These are meant to be light weight function spun up only when called. Once use case is to filteres our events into different lanes, we have fast and slow lanes for events that are live in the system verse reprocessing or reindexing we periodically need. This filtering is done based on a single metadata field. AWS not does support Go lambdas, and we have some use cases of that, but primarily for simple filters on event messages, Node is easier. In this example, you see we can take advantage of the javascript JSON pointer package to easily grab an element in a JSON object with the full unmarshalling that would be required with Go. Here it was easier for our devs and allowed smaller code in our Lambdas by sticking with JS.
+^The way we filter messages through our event driven system is primarily with AWS lambdas. These are meant to be light weight function spun up only when called. Once use case is to filters our events into different lanes, we have fast and slow lanes for events that are live in the system verse reprocessing or reindexing we periodically need. This filtering is done based on a single metadata field. AWS not does support Go lambdas, and we have some use cases of that, but primarily for simple filters on event messages, Node is easier. In this example, you see we can take advantage of the javascript JSON pointer package to easily grab an element in a JSON object with the full unmarshalling that would be required with Go. Here it was easier for our devs and allowed smaller code in our Lambdas by sticking with JS.
+
+---
+
+# Key Takeaways
+
+**What Went Well?**
+* Key language design elements form distributed systems
+* Concurrency model quick to implement
+* Robust Go tooling that fits into workflow
+* Fun to write and fun community
+
+**What Could be Improved?**
+* Versioning and vendoring lacks standards
+* Lacks maturity in some areas
+* Verbose for certain use cases
+
+^If I were to do a quick retro on Go and the Economist, these are some of the areas I'd highlight (above). Overall, it's been a great experience and Go is one of the critical elements that has allowed our system to scale. So what does this scaling look like? Let me highlight a recent success. We've launched a new mobile app, that used the Content Platform API to access all content. Before the launch we ran performance testing across the stack.
 
 ---
 
@@ -670,11 +720,14 @@ Status Codes [code:count] 200:36000
 * What architecture and patterns are right for your system?
 * How will your system need to scale?
 
-^Sometimes it's not always the right tool, and that's fine. We have a polyglot platform and use different languages where it makes sense. Go is liekly never going to be our top choice when we have to mess around with a lot of text and dynamic content, so we keep Node in our toolset. But Go's strengths are the backbone that allows are systems to scale quickly. We know it's the tool to turn to when we're adding new features and delivering to new products and it's made our development team a family of happy Gophers.
+![right](Slide41_SPACEGIRL.png)
+
+^Sometimes it's not always the right tool, and that's fine. We have a polyglot platform and use different languages where it makes sense. Go is likely never going to be our top choice when we have to mess around with a lot of text and dynamic content, so we keep Node in our toolset. But Go's strengths are the backbone that allows are systems to scale quickly. We know it's the tool to turn to when we're adding new features and delivering to new products and it's made our development team a family of happy Gophers.
 
 ---
 
 #Thank You!
-##Jonas
-###@yigenana
 
+![inline](SlideFinal_WWG.png)
+
+[.footer: Adorable Gophers by [Ashley McNamara](https://github.com/ashleymcnamara/gophers)]

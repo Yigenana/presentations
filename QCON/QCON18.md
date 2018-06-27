@@ -651,7 +651,7 @@ const getLane = (event) => {
 
 ---
 
-# Key Takeaways
+# GOing Retro
 
 **What Went Well?**
 * Key language design elements form distributed systems
@@ -668,7 +668,7 @@ const getLane = (event) => {
 
 ---
 
-# Key Takeaways: Performance
+# GOing Retro: Performance
 
 Single node: 60 seconds, 380 rps - 100% success - 3.5ms latency
 
@@ -685,7 +685,7 @@ Status Codes [code:count] 200:18000
 
 ---
 
-# Key Takeaways: Performance
+# GOing Retro: Performance
 
 Full stack: 60 seconds, 600 rps - 100% success - 18ms latency
 
@@ -704,15 +704,15 @@ Status Codes [code:count] 200:36000
 
 ---
 
-# Key Takeaways: Scale
+# GOing Retro: Scale
 
-//To Do: Lamaar screen shot.
+![left](Slide39_Lamaar.png)
 
 ^The new product was our mobile app, a huge upgrade from our existing digital paper experience. Our mobile team was easily able to work with our API and we were able to quickly iterate and add new features as user groups and feedback was gathered. It's one of the fasted product launches we've had. Partially on this success, we're running an AMP project, with AMP pages built using our API as the backend, and developers on all teams are able to move quickly and rapidly release to market.
 
 ---
 
-# Key Takeaways: Design
+# GOing Retro: Design
 
 **Systems Design**
 * What are your system goals?

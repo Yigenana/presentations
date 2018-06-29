@@ -42,7 +42,7 @@ theme: simple, 3
 * Event Messaging
 * Worker microservices
 * Distributed
-* S3, DynamoDB, and ElasticSearch data storage
+* S3, DynamoDB, and ElasticSearch data stores
 * RESTful API & GraphQL
 
 ![right](Slide5_BMI.png)
@@ -94,11 +94,22 @@ theme: simple, 3
 
 # Fail Fast: Error Handling
 
+
 ```go
+
 type error interface {
     Error() string
 }
 
+```
+^Let's introduce the error type. In Go, all errors are values. The Error type is predeclared and is an interface, which you see in the first block above. I won't spend too much time on Go interfaces in this talk, but essentially it is a named collection of methods and any other custom type can satisfy the interface if it has those same methods. So the error type is an interface that can describe itself with a string.
+
+---
+
+# Fail Fast: Error Handling
+
+
+```go
 // New returns an error that formats as the given text.
 func New(text string) error {
 	return &errorString{text}
@@ -115,7 +126,7 @@ func (e *errorString) Error() string {
 
 ```
 
-^Let's introduce the error type. In Go, all errors are values. The Error type is predeclared and is an interface, which you see in the first block above. I won't spend too much time on Go interfaces in this talk, but essentially it is a named collection of methods and any other custom type can satisfy the interface if it has those same methods. So the error type is an interface that can describe itself with a string. So by added an Error method that returns a string, you can easily create custom errors and you generate them like with the New function above, which comes from the errors package.
+^So by adding an Error method that returns a string, you can easily create custom errors and you generate them like with the New function above, which comes from the errors package.
 
 ---
 
@@ -138,7 +149,7 @@ func fetchContent(id string) (string, error) {
 
 #Fail Fast: Error Handling
 
-```go
+```go, [.highlight: 3-12]
 package net
 
 type Error interface {
@@ -252,7 +263,7 @@ One moment an empty value is 0.
 {
 	"id": "test123",
 	"type": "article",
-	"ukOnly": 0
+	"position": 0
 }
 ```
 
@@ -262,7 +273,7 @@ The next moment it's an empty string!
 {
 	"id": "test123",
 	"type": "article",
-	"ukOnly": ""
+	"position": ""
 }
 ```
 
@@ -297,7 +308,7 @@ type decodeState struct {
 
 #Consistency: Serializing Dynamic Content
 
-```go
+```go, [.highlight: 1-2,10-11]
 func (d *decodeState) value(v reflect.Value) error {
 	case scanBeginArray:
 		if v.IsValid() {
@@ -327,7 +338,7 @@ func (d *decodeState) value(v reflect.Value) error {
 
 #Consistency: Serializing Dynamic Content
 
-```go
+```go, [.highlight: 3-7,11-13]
 // convertNumber converts the number literal s to a float64 or a Number
 // depending on the setting of d.useNumber.
 func (d *decodeState) convertNumber(s string) (interface{}, error) {
@@ -365,7 +376,7 @@ type traverseState struct {
 
 #Consistency: Serializing Dynamic Content
 
-```go
+```go, [.highlight: 1-4,11,15]
 // traverse is a top level tree traversal function.
 func (t traverseState) traverse(v reflect.Value) {
 	switch v.Kind() {
@@ -397,13 +408,12 @@ func (t traverseState) traverse(v reflect.Value) {
 #Consistency: Serializing Dynamic Content
 
 ```go
-func toInt(r gjson.Result) int64 {
-	if !r.Exists() {
-		return 0
-	}
-	switch r.Type {
-	case gjson.True, gjson.False, gjson.String, gjson.Number:
-		return r.Int()
+func toInt(v reflect.Value) int64 {
+	switch v.Type {
+	case int:
+		return v.Int()
+	case string:
+		i, err := strconv.Atoi(v.String())
 	default:
 		return 0
 	}
@@ -462,7 +472,7 @@ func main() {
 
 # Scale: HTTP and concurrency
 
-```go, [.highlight: 1, 21]
+```go, [.highlight: 1, 20]
 func (srv *Server) Serve(l net.Listener) error {
 	baseCtx := context.Background() // base is always background, per Issue 16220
 	ctx := context.WithValue(baseCtx, ServerContextKey, srv)
@@ -475,7 +485,6 @@ func (srv *Server) Serve(l net.Listener) error {
 			default:
 			}
 			if ne, ok := e.(net.Error); ok && ne.Temporary() {
-				// delay handling.
 				continue
 			}
 			return e
@@ -503,7 +512,6 @@ func (srv *Server) Serve(l net.Listener) error {
 
 ![right](Slide26_Venn.png)
 
-[.footer: [Go Concurrency Patterns](https://www.youtube.com/watch?v=f6kdp27TYZs) & [Understanding Channels](https://www.youtube.com/watch?v=KBZlN0izeiY)]
 
 ^Working with distributed data means wrestling with the guarantees we promise consumers. As per the CAP theorem, it is impossible to simultaneously provide more than two out of the following three guarantees: Consistency. Availability. Partition tolerance. In our platform, we chose Eventual Consistency, meaning that we guarantee reads from our data sources will eventually be consistent, we tolerate moderate delays in all data sources reaching a consistent state. One of the ways we minimize that gap is by taking advantage of Goroutines. As I mentioned, Goroutines are essentially green threads. They're lightweight, and managed by the Go runtime to prevent thread exhaustion. There are some great talks I linked here that go more in depth if you're interested.
 
@@ -511,7 +519,7 @@ func (srv *Server) Serve(l net.Listener) error {
 
 #Scale: Content Guarantees
 
-```go
+```go, [.highlight: 1,6,8,10, 13-14,17-18]
 func reprocess(searchResult *http.Response) (int, error) {
 	responses := make([]response, len(searchResult.Hits.Hits))	
 	var wg sync.WaitGroup
@@ -551,6 +559,8 @@ ProcessTimeSync-3   	    20	   4.206750535s
 ProcessTimeSync-4   	    20	   3.745507495s
 ProcessTimeSync-5   	    20	   4.109966063s
 ```
+
+[.footer: [Go Concurrency Patterns](https://www.youtube.com/watch?v=f6kdp27TYZs) & [Understanding Channels](https://www.youtube.com/watch?v=KBZlN0izeiY)]
 
 ^This is a somewhat oversimplified example of the performance differences when I run this reindexing process procedurally vs asynchronous with Goroutines. The improvements are not insignificant and in a distributed systems with 1 content change triggering hundreds of events, these improvements add up and have enables use to reach a consistent state with minimal impact or delay for consumers.
 
@@ -654,13 +664,13 @@ const getLane = (event) => {
 # GOing Retro
 
 **What Went Well?**
-* Key language design elements form distributed systems
+* Key language design elements for distributed systems
 * Concurrency model quick to implement
 * Robust Go tooling that fits into workflow
 * Fun to write and fun community
 
 **What Could be Improved?**
-* Versioning and vendoring lacks standards
+* Versioning and vendoring lack standards
 * Lacks maturity in some areas
 * Verbose for certain use cases
 
@@ -668,45 +678,9 @@ const getLane = (event) => {
 
 ---
 
-# GOing Retro: Performance
-
-Single node: 60 seconds, 380 rps - 100% success - 3.5ms latency
-
-```
-./testTwo.sh six 60 380
-Requests [total, rate] 18000, 300.02
-Duration [total, attack, wait] 1m0.000150762s, 59.996660501s, 3.490261ms
-Latencies [mean, 50, 95, 99, max] 3.463947ms, 3.419128ms, 3.725858ms, 4.210743ms, 11.936912ms
-Bytes In [total, mean] 1119096000, 62172.00
-Bytes Out [total, mean] 0, 0.00
-Success [ratio] 100.00%
-Status Codes [code:count] 200:18000
-```
-
----
-
-# GOing Retro: Performance
-
-Full stack: 60 seconds, 600 rps - 100% success - 18ms latency
-
-```
-./testTwo.sh six 60 600
-Requests [total, rate] 36000, 600.02
-Duration [total, attack, wait] 1m0.064912748s, 59.998309171s, 66.603577ms
-Latencies [mean, 50, 95, 99, max] 17.773203ms, 11.960915ms, 48.500723ms, 68.346101ms, 265.309926ms
-Bytes In [total, mean] 180513393, 5014.26
-Bytes Out [total, mean] 0, 0.00
-Success [ratio] 100.00%
-Status Codes [code:count] 200:36000
-```
-
-^Go has generally worked well for us and we enjoy writing it. Following tests were run to validate the level of concurrent requests we could handle prior to a new product launch.
-
----
-
 # GOing Retro: Scale
 
-![left](Slide39_Lamaar.png)
+![left, fit](Slide39_Lamaar.png)
 
 ^The new product was our mobile app, a huge upgrade from our existing digital paper experience. Our mobile team was easily able to work with our API and we were able to quickly iterate and add new features as user groups and feedback was gathered. It's one of the fasted product launches we've had. Partially on this success, we're running an AMP project, with AMP pages built using our API as the backend, and developers on all teams are able to move quickly and rapidly release to market.
 
@@ -727,6 +701,8 @@ Status Codes [code:count] 200:36000
 ---
 
 #Thank You!
+
+##@yigenana
 
 ![inline](SlideFinal_WWG.png)
 
